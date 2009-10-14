@@ -9,7 +9,13 @@ use File::Temp qw(tempdir);
 use POSIX qw(SIGTERM WNOHANG setuid);
 
 our $VERSION = 0.03;
-our @SEARCH_PATHS = qw(/usr/local/pgsql);
+
+our @SEARCH_PATHS = (
+    # popular installtion dir?
+    qw(/usr/local/pgsql),
+    # ubuntu (maybe debian as well, find the newest version)
+    (sort { $b cmp $a } grep { -d $_ } glob "/usr/lib/postgresql/*"),
+);
 
 our $errstr;
 our $BASE_PORT = 15432;
@@ -77,6 +83,7 @@ sub DESTROY {
 
 sub dsn {
     my ($self, %args) = @_;
+    $args{host} ||= '127.0.0.1';
     $args{port} ||= $self->port;
     $args{user} ||= 'postgres';
     $args{dbname} ||= 'template1';
@@ -127,6 +134,7 @@ sub _try_start {
             $self->postmaster_args,
             '-p', $port,
             '-D', $self->base_dir . '/data',
+            '-k', $self->base_dir . '/tmp',
         );
         exec($cmd);
         die "failed to launch postmaster:$?";
@@ -168,6 +176,7 @@ sub setup {
     my $self = shift;
     # (re)create directory structure
     mkdir $self->base_dir;
+    mkdir $self->base_dir . '/tmp';
     # initdb
     if (! -d $self->base_dir . '/data') {
         pipe my $rfh, my $wfh
