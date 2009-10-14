@@ -1,0 +1,10 @@
+Revision history for Perl extension Test::postgresql.
+
+0.03  Thu Aug 20 21:00:00 2009
+	- preserve port number on restart
+
+0.02  Wed Aug 19 19:30:00 2009
+	- use given port number if given
+
+0.01  Mon Aug 17 21:15:00 2009
+	- initial release
