@@ -8,20 +8,22 @@ use Test::postgresql;
 my $pgsql = Test::postgresql->new()
     or plan skip_all => $Test::postgresql::errstr;
 
-plan tests => 2;
+plan tests => 3;
 
-my $base_dir = $pgsql->base_dir;
-my $port = $pgsql->port;
+my $dsn = $pgsql->dsn;
 
-my $dbh = DBI->connect(
-    "DBI:Pg:dbname=template1;user=postgres;port=$port"
+is(
+    $dsn,
+    "DBI:Pg:dbname=template1;port=@{[$pgsql->port]};user=postgres",
+    'check dsn',
 );
+
+my $dbh = DBI->connect($dsn);
 ok($dbh, 'connect to postgresql');
 undef $dbh;
 
 undef $pgsql;
 ok(
-    ! DBI->connect(
-        "DBI:Pg(PrintError=>0,RaiseError=>0):dbname=template1;user=postgres;port=$port"),
+    ! DBI->connect($dsn),
     "shutdown postgresql",
 );

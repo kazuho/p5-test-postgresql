@@ -75,6 +75,14 @@ sub DESTROY {
         if defined $self->pid;
 }
 
+sub dsn {
+    my ($self, %args) = @_;
+    $args{port} ||= $self->port;
+    $args{user} ||= 'postgres';
+    $args{dbname} ||= 'template1';
+    return 'DBI:Pg:' . join(';', map { "$_=$args{$_}" } sort keys %args);
+}
+
 sub start {
     my $self = shift;
     return
@@ -273,6 +281,10 @@ Arguments passed to C<initdb> and C<postmaster>.  Following example adds --encod
       initdb_args
           => $Test::postgresql::Defaults{initdb_args} . ' --encoding=utf8'
   ) or plan skip_all => $Test::postgresql::errstr;
+
+=head2 dsn
+
+Builds and returns dsn by using given parameters (if any).  Default username is 'postgres', and dbname is 'template1'.
 
 =head2 pid
 
