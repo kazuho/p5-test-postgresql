@@ -121,11 +121,14 @@ sub _try_start {
             setuid($self->uid)
                 or die "setuid failed:$!";
         }
-        exec(
+        my $cmd = join(
+            ' ',
             $self->postmaster,
+            $self->postmaster_args,
             '-p', $port,
             '-D', $self->base_dir . '/data',
         );
+        exec($cmd);
         die "failed to launch postmaster:$?";
     }
     close $logfh;
@@ -306,9 +309,17 @@ Stops postmaster.
 
 Setups the postgresql instance.
 
+=head1 AUTHOR
+
+Kazuho Oku
+
+=head1 THANKS TO
+
+HSW
+
 =head1 COPYRIGHT
 
-Copyright (C) 2009 Cybozu Labs, Inc.  Written by Kazuho Oku.
+Copyright (C) 2009 Cybozu Labs, Inc.
 
 =head1 LICENSE
 
