@@ -6,10 +6,11 @@ use warnings;
 use 5.008;
 use Class::Accessor::Lite;
 use Cwd;
+use DBI;
 use File::Temp qw(tempdir);
 use POSIX qw(SIGTERM WNOHANG setuid);
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 our @SEARCH_PATHS = (
     # popular installtion dir?
@@ -89,7 +90,7 @@ sub dsn {
     $args{host} ||= '127.0.0.1';
     $args{port} ||= $self->port;
     $args{user} ||= 'postgres';
-    $args{dbname} ||= 'template1';
+    $args{dbname} ||= 'test';
     return 'DBI:Pg:' . join(';', map { "$_=$args{$_}" } sort keys %args);
 }
 
@@ -97,20 +98,31 @@ sub start {
     my $self = shift;
     return
         if defined $self->pid;
-    if ($self->port) {
-        if ($self->_try_start($self->port)) {
-            return;
-        }
-    } else {
-        # try by incrementing port no
-        for (my $port = $BASE_PORT; $port < $BASE_PORT + 100; $port++) {
-            if ($self->_try_start($port)) {
+    # start (or die)
+    sub {
+        if ($self->port) {
+            if ($self->_try_start($self->port)) {
                 return;
             }
+        } else {
+            # try by incrementing port no
+            for (my $port = $BASE_PORT; $port < $BASE_PORT + 100; $port++) {
+                if ($self->_try_start($port)) {
+                    return;
+                }
+            }
+        }
+        # failed
+        die "failed to launch postgresql:$!";
+    }->();
+    { # create "test" database
+        my $dbh = DBI->connect($self->dsn(dbname => 'template1'), '', '', {})
+            or die $DBI::errstr;
+        if ($dbh->selectrow_arrayref(q{SELECT COUNT(*) FROM pg_database WHERE datname='test'})->[0] == 0) {
+            $dbh->do('CREATE DATABASE test')
+                or die $dbh->errstr;
         }
     }
-    # failed
-    die "failed to launch postgresql:$!";
 }
 
 sub _try_start {
@@ -296,7 +308,7 @@ Arguments passed to C<initdb> and C<postmaster>.  Following example adds --encod
 
 =head2 dsn
 
-Builds and returns dsn by using given parameters (if any).  Default username is 'postgres', and dbname is 'template1'.
+Builds and returns dsn by using given parameters (if any).  Default username is 'postgres', and dbname is 'test' (an empty database).
 
 =head2 pid
 

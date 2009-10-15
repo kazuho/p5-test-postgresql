@@ -1,5 +1,8 @@
 Revision history for Perl extension Test::postgresql.
 
+0.06  Thu Oct 15 09:40:00 2009
+	- dsn() defaults to an empty "test" database for better interoperability with Test::mysqld
+
 0.05  Thu Oct 15 08:10:00 2009
 	- add macport installation target dir to default search paths
 	- adjust pod synopsis to follow the changes in 0.04

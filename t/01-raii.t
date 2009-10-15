@@ -14,7 +14,7 @@ my $dsn = $pgsql->dsn;
 
 is(
     $dsn,
-    "DBI:Pg:dbname=template1;host=127.0.0.1;port=@{[$pgsql->port]};user=postgres",
+    "DBI:Pg:dbname=test;host=127.0.0.1;port=@{[$pgsql->port]};user=postgres",
     'check dsn',
 );
 
