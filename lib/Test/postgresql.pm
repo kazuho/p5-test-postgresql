@@ -9,13 +9,15 @@ use Cwd;
 use File::Temp qw(tempdir);
 use POSIX qw(SIGTERM WNOHANG setuid);
 
-our $VERSION = 0.03;
+our $VERSION = '0.05';
 
 our @SEARCH_PATHS = (
     # popular installtion dir?
     qw(/usr/local/pgsql),
     # ubuntu (maybe debian as well, find the newest version)
     (sort { $b cmp $a } grep { -d $_ } glob "/usr/lib/postgresql/*"),
+    # macport
+    (sort { $b cmp $a } grep { -d $_ } glob "/opt/local/lib/postgresql-*"),
 );
 
 our $errstr;
@@ -259,10 +261,7 @@ Test::postgresql - postgresql runner for tests
   
   plan tests => XXX;
   
-  my $dbh = DBI->connect(
-    "DBI:Pg:...;port=" . $pgsql->port,
-    ...
-  );
+  my $dbh = DBI->connect($pgsql->dsn);
 
 =head1 DESCRIPTION
 

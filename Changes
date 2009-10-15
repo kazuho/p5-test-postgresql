@@ -1,5 +1,15 @@
 Revision history for Perl extension Test::postgresql.
 
+0.05  Thu Oct 15 08:10:00 2009
+	- add macport installation target dir to default search paths
+	- adjust pod synopsis to follow the changes in 0.04
+
+0.04  Thu Oct 15 08:00:00 2009
+	- add dsn generator
+	- use "postmaster_args" on pastmaster start (thanks to HSW)
+	- create temporary files within base_dir (ubuntu / debian compatibility)
+	- add .deb package installation target dir to default search paths
+
 0.03  Thu Aug 20 21:00:00 2009
 	- preserve port number on restart
 
