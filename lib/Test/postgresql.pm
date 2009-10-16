@@ -10,7 +10,7 @@ use DBI;
 use File::Temp qw(tempdir);
 use POSIX qw(SIGTERM WNOHANG setuid);
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 our @SEARCH_PATHS = (
     # popular installtion dir?
@@ -34,6 +34,7 @@ our %Defaults = (
     postmaster      => undef,
     postmaster_args => '-h 127.0.0.1',
     uid             => undef,
+    _owner_pid      => undef,
 );
 
 Class::Accessor::Lite->mk_accessors(keys %Defaults);
@@ -42,7 +43,8 @@ sub new {
     my $klass = shift;
     my $self = bless {
         %Defaults,
-        @_ == 1 ? %{$_[0]} : @_
+        @_ == 1 ? %{$_[0]} : @_,
+        _owner_pid => $$,
     }, $klass;
     if (! defined $self->uid && $ENV{USER} eq 'root') {
         my @a = getpwnam('nobody')
@@ -82,7 +84,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
     $self->stop
-        if defined $self->pid;
+        if defined $self->pid && $$ == $self->_owner_pid;
 }
 
 sub dsn {
