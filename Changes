@@ -1,5 +1,8 @@
 Revision history for Perl extension Test::postgresql.
 
+0.09  Fri Oct 23 16:50:00 2009
+	- change cwd and directory permissions, modes for better testing
+
 0.08  Fri Oct 16 13:25:00 2009
       - do not destroy postmaster when child process exits
 

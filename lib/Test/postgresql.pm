@@ -10,7 +10,7 @@ use DBI;
 use File::Temp qw(tempdir);
 use POSIX qw(SIGTERM WNOHANG setuid);
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 our @SEARCH_PATHS = (
     # popular installtion dir?
@@ -102,20 +102,19 @@ sub start {
         if defined $self->pid;
     # start (or die)
     sub {
+        my $err;
         if ($self->port) {
-            if ($self->_try_start($self->port)) {
-                return;
-            }
+            $err = $self->_try_start($self->port)
+                or return;
         } else {
             # try by incrementing port no
             for (my $port = $BASE_PORT; $port < $BASE_PORT + 100; $port++) {
-                if ($self->_try_start($port)) {
-                    return;
-                }
+                $err = $self->_try_start($port)
+                    or return;
             }
         }
         # failed
-        die "failed to launch postgresql:$!";
+        die "failed to launch postgresql:$!\n$err";
     }->();
     { # create "test" database
         my $dbh = DBI->connect($self->dsn(dbname => 'template1'), '', '', {})
@@ -141,6 +140,8 @@ sub _try_start {
             or die "dup(2) failed:$!";
         open STDERR, '>&', $logfh
             or die "dup(2) failed:$!";
+        chdir $self->base_dir
+            or die "failed to chdir to:" . $self->base_dir . ":$!";
         if (defined $self->uid) {
             setuid($self->uid)
                 or die "setuid failed:$!";
@@ -168,14 +169,14 @@ sub _try_start {
             if $lines =~ /is ready to accept connections/;
         if (waitpid($pid, WNOHANG) > 0) {
             # failed
-            return;
+            return $lines;
         }
         sleep 1;
     }
     # postgresql is ready
     $self->pid($pid);
     $self->port($port);
-    return 1;
+    return;
 }
 
 sub stop {
@@ -193,6 +194,12 @@ sub setup {
     my $self = shift;
     # (re)create directory structure
     mkdir $self->base_dir;
+    chmod 0755, $self->base_dir
+        or die "failed to chmod 0755 dir:" . $self->base_dir . ":$!";
+    if ($ENV{USER} eq 'root') {
+        chown $self->uid, -1, $self->base_dir
+            or die "failed to chown dir:" . $self->base_dir . ":$!";
+    }
     if (mkdir $self->base_dir . '/tmp') {
         if ($self->uid) {
             chown $self->uid, -1, $self->base_dir . '/tmp'
@@ -212,6 +219,8 @@ sub setup {
                 or die "dup(2) failed:$!";
             open STDERR, '>&', $wfh
                 or die "dup(2) failed:$!";
+            chdir $self->base_dir
+                or die "failed to chdir to:" . $self->base_dir . ":$!";
             if (defined $self->uid) {
                 setuid($self->uid)
                     or die "setuid failed:$!";
