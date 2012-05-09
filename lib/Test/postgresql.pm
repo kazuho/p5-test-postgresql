@@ -244,6 +244,10 @@ sub setup {
         }
         die "*** initdb failed ***\n$output\n"
             if $? != 0;
+
+        # use postgres hard-coded configuration as some packagers mess
+        # around with postgresql.conf.sample too much:
+        truncate $self->base_dir . '/data/postgresql.conf', 0;
     }
 }
 
