@@ -129,16 +129,16 @@ sub start {
 sub _try_start {
     my ($self, $port) = @_;
     # open log and fork
-    open my $logfh, '>', $self->base_dir . '/postgres.log'
+    open my $logfh, '>>', $self->base_dir . '/postgres.log'
         or die 'failed to create log file:' . $self->base_dir
             . "/postgres.log:$!";
     my $pid = fork;
     die "fork(2) failed:$!"
         unless defined $pid;
     if ($pid == 0) {
-        open STDOUT, '>&', $logfh
+        open STDOUT, '>>&', $logfh
             or die "dup(2) failed:$!";
-        open STDERR, '>&', $logfh
+        open STDERR, '>>&', $logfh
             or die "dup(2) failed:$!";
         chdir $self->base_dir
             or die "failed to chdir to:" . $self->base_dir . ":$!";
@@ -244,6 +244,10 @@ sub setup {
         }
         die "*** initdb failed ***\n$output\n"
             if $? != 0;
+
+        # use postgres hard-coded configuration as some packagers mess
+        # around with postgresql.conf.sample too much:
+        truncate $self->base_dir . '/data/postgresql.conf', 0;
     }
 }
 
